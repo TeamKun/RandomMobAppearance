@@ -2,7 +2,8 @@ package net.kunmc.lab.randommobappearance;
 
 import java.util.Arrays;
 
-public enum EntityTypeId {
+//BukkitのEntityTypeのEntityType型のtypeIdは何故かマイクラの仕様と異なるのでエンティティ名とtypeIdの対応表を作成した.
+public enum EntityType {
     ARMOR_STAND(1),
     ARROW(2),
     BAT(3),
@@ -79,7 +80,7 @@ public enum EntityTypeId {
 
     private final int id;
 
-    private EntityTypeId(int id) {
+    private EntityType(int id) {
         this.id = id;
     }
 
@@ -87,8 +88,8 @@ public enum EntityTypeId {
         return id;
     }
 
-    public static EntityTypeId valueOf(int id) {
-        return Arrays.stream(EntityTypeId.values())
+    public static EntityType valueOf(int id) {
+        return Arrays.stream(EntityType.values())
                 .filter(x -> x.getId() == id)
                 .findFirst()
                 .orElse(null);

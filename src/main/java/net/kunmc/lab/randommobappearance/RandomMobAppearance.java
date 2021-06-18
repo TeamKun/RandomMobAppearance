@@ -16,13 +16,23 @@ import org.bukkit.util.Vector;
 import java.util.*;
 
 public final class RandomMobAppearance extends JavaPlugin {
+    /*
+     * MapのKeyには特定のエンティティの内部Idが入る
+     * Map.EntryのKeyにはMapのKeyに対応するエンティティのインスタンス,Valueには見せかけたいエンティティのTypeIdが入る.
+     *
+     * エンティティのインスタンスをプールする理由:
+     * エンティティが死んだときのサウンドを置き換えるため.
+     * Bukkit.selectEntitiesやWorld#getEntitiesでは死んだエンティティを取得できず,サウンドのLocationとエンティティのTypeIdとの対応が
+     * 取れないためインスタンスをプールする.
+     */
     private final Map<Integer, Map.Entry<Entity, Integer>> entityIdToEntityAndTypeIdMap = new HashMap<>();
+
     private static JavaPlugin INSTANCE;
 
     public static JavaPlugin getInstance() {
         return INSTANCE;
     }
-    
+
     public RandomMobAppearance() {
         INSTANCE = this;
     }
@@ -37,7 +47,7 @@ public final class RandomMobAppearance extends JavaPlugin {
                 if (entityIdToEntityAndTypeIdMap.containsKey(entityId)) {
                     packet.getIntegers().write(1, entityIdToEntityAndTypeIdMap.get(entityId).getValue());
                 } else {
-                    EntityTypeId[] types = EntityTypeId.values();
+                    EntityType[] types = EntityType.values();
                     int typeId = types[new Random().nextInt(types.length)].getId();
 
                     Entity entity = Utils.getAllMobs().stream()
@@ -74,9 +84,11 @@ public final class RandomMobAppearance extends JavaPlugin {
                     return;
                 }
 
+                //パケット内部では座標数値が8倍されているので8で除して適切な値にする.
                 float x = packet.getIntegers().read(0).floatValue() / 8;
                 float y = packet.getIntegers().read(1).floatValue() / 8;
                 float z = packet.getIntegers().read(2).floatValue() / 8;
+                //座標の位置に存在するエンティティをプールから取得する.
                 Entity entity = entityIdToEntityAndTypeIdMap.values().stream()
                         .map(Map.Entry::getKey)
                         .filter(ent -> ent.getLocation().toVector().distance(new Vector(x, y, z)) < 0.25)
@@ -87,17 +99,18 @@ public final class RandomMobAppearance extends JavaPlugin {
                 }
 
                 int entityId = entity.getEntityId();
-                String surfaceEntityName = EntityTypeId.valueOf(entityIdToEntityAndTypeIdMap.get(entityId).getValue()).toString().toLowerCase();
+                String surfaceEntityName = EntityType.valueOf(entityIdToEntityAndTypeIdMap.get(entityId).getValue()).toString().toLowerCase();
+                //trader_llamaやcave_spiderはllamaやspiderと同じ音声を使っているため名前を訂正する.
                 if (surfaceEntityName.equals("trader_llama")) {
                     surfaceEntityName = "llama";
                 } else if (surfaceEntityName.equals("cave_spider")) {
                     surfaceEntityName = "spider";
                 }
 
-                String finalSoundName = soundName;
-                String finalEntityName = surfaceEntityName;
+                String newSoundName = soundName
+                        .replaceFirst("\\.[a-z]+\\.", "." + surfaceEntityName + ".");
                 Sound sound = Arrays.stream(Sound.values())
-                        .filter(s -> s.getKey().getKey().equals(finalSoundName.replace("_", "").replaceFirst("\\.[a-z]+\\.", "." + finalEntityName + ".")))
+                        .filter(s -> s.getKey().getKey().equals(newSoundName))
                         .findFirst()
                         .orElse(null);
                 if (sound == null) {
