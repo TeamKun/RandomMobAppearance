@@ -6,20 +6,26 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
-import org.bukkit.Bukkit;
+import net.kunmc.lab.randommobappearance.listener.PlayerAttemptAttackEnderDragonListener;
+import net.kunmc.lab.randommobappearance.util.Utils;
 import org.bukkit.Sound;
-import org.bukkit.World;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class RandomMobAppearance extends JavaPlugin {
     private final Map<Integer, Map.Entry<Entity, Integer>> entityIdToEntityAndTypeIdMap = new HashMap<>();
+    private static JavaPlugin INSTANCE;
+
+    public static JavaPlugin getInstance() {
+        return INSTANCE;
+    }
+    
+    public RandomMobAppearance() {
+        INSTANCE = this;
+    }
 
     @Override
     public void onEnable() {
@@ -34,7 +40,7 @@ public final class RandomMobAppearance extends JavaPlugin {
                     EntityTypeId[] types = EntityTypeId.values();
                     int typeId = types[new Random().nextInt(types.length)].getId();
 
-                    Entity entity = getAllMobs().stream()
+                    Entity entity = Utils.getAllMobs().stream()
                             .filter(x -> x.getEntityId() == entityId)
                             .findFirst()
                             .orElse(null);
@@ -84,6 +90,8 @@ public final class RandomMobAppearance extends JavaPlugin {
                 String surfaceEntityName = EntityTypeId.valueOf(entityIdToEntityAndTypeIdMap.get(entityId).getValue()).toString().toLowerCase();
                 if (surfaceEntityName.equals("trader_llama")) {
                     surfaceEntityName = "llama";
+                } else if (surfaceEntityName.equals("cave_spider")) {
+                    surfaceEntityName = "spider";
                 }
 
                 String finalSoundName = soundName;
@@ -131,14 +139,8 @@ public final class RandomMobAppearance extends JavaPlugin {
                 }
             }
         });
-    }
 
-    private List<Entity> getAllMobs() {
-        return Bukkit.getWorlds().stream()
-                .map(World::getEntities)
-                .flatMap(Collection::stream)
-                .filter(ent -> ent instanceof LivingEntity && !(ent instanceof Player))
-                .collect(Collectors.toList());
+        getServer().getPluginManager().registerEvents(new PlayerAttemptAttackEnderDragonListener(), this);
     }
 
     @Override
