@@ -40,6 +40,10 @@ public final class RandomMobAppearance extends JavaPlugin {
     @Override
     public void onEnable() {
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(this, PacketType.Play.Server.SPAWN_ENTITY_LIVING) {
+            final List<EntityType> typeList = new ArrayList<EntityType>(Arrays.asList(EntityType.values())) {{
+                remove(EntityType.ARMOR_STAND);
+            }};
+
             @Override
             public void onPacketSending(PacketEvent e) {
                 PacketContainer packet = e.getPacket();
@@ -47,8 +51,7 @@ public final class RandomMobAppearance extends JavaPlugin {
                 if (entityIdToEntityAndTypeIdMap.containsKey(entityId)) {
                     packet.getIntegers().write(1, entityIdToEntityAndTypeIdMap.get(entityId).getValue());
                 } else {
-                    EntityType[] types = EntityType.values();
-                    int typeId = types[new Random().nextInt(types.length)].getId();
+                    int typeId = typeList.get(new Random().nextInt(typeList.size())).getId();
 
                     Entity entity = Utils.getAllMobs().stream()
                             .filter(x -> x.getEntityId() == entityId)
