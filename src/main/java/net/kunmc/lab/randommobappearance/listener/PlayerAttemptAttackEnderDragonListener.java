@@ -53,7 +53,8 @@ public class PlayerAttemptAttackEnderDragonListener implements Listener {
         boolean shouldDamage = enderDragon.getBoundingBox().overlaps(p.getEyeLocation().toVector(),
                 p.getEyeLocation().add(p.getEyeLocation().getDirection().multiply(4)).toVector());
         if (shouldDamage) {
-            enderDragon.setHealth(enderDragon.getHealth() - calcDamage(e.getItem()));
+            double damage = calcDamage(e.getItem());
+            enderDragon.setHealth(enderDragon.getHealth() - damage < 0 ? 0 : enderDragon.getHealth() - damage);
             enderDragon.getWorld().playSound(enderDragon.getLocation(), Sound.ENTITY_ENDER_DRAGON_HURT, 0.5F, 1);
         }
     }
